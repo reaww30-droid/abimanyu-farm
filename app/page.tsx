@@ -1,12 +1,6 @@
 'use client';
 
-import { redirect } from 'next/navigation';
-
 export default function Page() {
-  redirect('/index.html');
-}
-  }, []);
-
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans">
       {/* Memuat tampilan HTML lengkap Abimanyu Farm Pro */}
@@ -44,7 +38,7 @@ export default function Page() {
                       <i class="fa-solid fa-cow"></i>
                   </div>
                   <h1 class="text-2xl font-black">Abimanyu Farm Pro</h1>
-                  <p class="text-sm text-slate-500">Dashboard Anda siap diintegrasikan dengan database Prisma SQLite.</p>
+                  <p class="text-sm text-slate-500">Dashboard Anda siap diintegrasikan dengan database Supabase PostgreSQL.</p>
                   <a href="/dashboard" class="inline-block bg-brand-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-brand-700 transition">
                       Masuk ke Sistem Utama
                   </a>
