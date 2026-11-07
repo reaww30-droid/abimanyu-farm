@@ -1,4 +1,4 @@
-'use server'
+'use server';
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
@@ -16,42 +16,54 @@ export async function getAnimals() {
   }
 }
 
-// Fungsi untuk menambah data ternak baru
+// Fungsi untuk menambah atau memperbarui data ternak
 export async function createAnimal(formData: FormData) {
   try {
     const tag = formData.get('tag') as string;
-    const type = formData.get('type') as string;
-    const breed = formData.get('breed') as string;
-    const gender = formData.get('gender') as string;
-    const weight = parseFloat(formData.get('weight') as string) || 0;
-    const age = parseInt(formData.get('age') as string) || 0;
-    const milkVolume = parseFloat(formData.get('milkVolume') as string) || 0;
-    const reproStatus = formData.get('reproStatus') as string;
-    const healthStatus = formData.get('healthStatus') as string;
-    const buyPrice = parseFloat(formData.get('buyPrice') as string) || 0;
-    const feedCost = parseFloat(formData.get('feedCost') as string) || 0;
+    if (!tag) {
+      return { success: false, message: 'Tag ID hewan wajib diisi!' };
+    }
 
-    await prisma.animal.create({
-      data: {
-        tag,
-        type,
-        breed,
-        gender,
-        weight,
-        age,
-        milkVolume,
-        reproStatus,
-        healthStatus,
-        buyPrice,
-        feedCost,
+    const type = (formData.get('type') as string) || 'Sapi';
+    const breed = (formData.get('breed') as string) || '';
+    const gender = (formData.get('gender') as string) || '';
+    const weight = formData.get('weight') ? parseFloat(formData.get('weight') as string) : null;
+    const age = formData.get('age') ? parseInt(formData.get('age') as string) : null;
+    
+    // Disesuaikan dengan nama kolom di Prisma (milkProduction, lactationStatus, purchasePrice)
+    const milkProduction = formData.get('milkVolume') ? parseFloat(formData.get('milkVolume') as string) : null;
+    const lactationStatus = (formData.get('reproStatus') as string) || '';
+    const healthStatus = (formData.get('healthStatus') as string) || 'Sehat Walafiat';
+    const purchasePrice = formData.get('buyPrice') ? parseFloat(formData.get('buyPrice') as string) : null;
+    const feedCost = formData.get('feedCost') ? parseFloat(formData.get('feedCost') as string) : null;
+
+    const animalData = {
+      type,
+      breed,
+      gender,
+      weight,
+      age,
+      milkProduction,
+      lactationStatus,
+      healthStatus,
+      purchasePrice,
+      feedCost,
+    };
+
+    // Menggunakan upsert agar aman jika tag sudah ada
+    await prisma.animal.upsert({
+      where: { tag: tag },
+      update: animalData,
+      create: {
+        tag: tag,
+        ...animalData,
       },
     });
 
-    // Segarkan halaman utama agar data terbaru langsung muncul
     revalidatePath('/');
-    return { success: true, message: 'Data ternak berhasil ditambahkan!' };
+    return { success: true, message: 'Data ternak berhasil disimpan!' };
   } catch (error) {
-    console.error("Gagal menambah ternak:", error);
-    return { success: false, message: 'Gagal menambahkan data ternak. Pastikan Tag ID belum digunakan.' };
+    console.error("Gagal menyimpan ternak:", error);
+    return { success: false, message: 'Gagal menyimpan data ternak ke database.' };
   }
 }
