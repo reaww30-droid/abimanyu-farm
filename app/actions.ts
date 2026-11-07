@@ -1,15 +1,24 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
+
+// Inisialisasi Supabase Client menggunakan URL dan Public Anon Key
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tsojjspoqaaieelliygl.supabase.co';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Fungsi untuk mengambil semua data ternak
 export async function getAnimals() {
   try {
-    const animals = await prisma.animal.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return animals;
+    const { data, error } = await supabase
+      .from('Animal')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error("Gagal mengambil data ternak:", error);
     return [];
@@ -30,14 +39,15 @@ export async function createAnimal(formData: FormData) {
     const weight = formData.get('weight') ? parseFloat(formData.get('weight') as string) : null;
     const age = formData.get('age') ? parseInt(formData.get('age') as string) : null;
     
-    // Disesuaikan dengan nama kolom di Prisma (milkProduction, lactationStatus, purchasePrice)
+    // Pemetaan input form ke nama kolom Supabase
     const milkProduction = formData.get('milkVolume') ? parseFloat(formData.get('milkVolume') as string) : null;
     const lactationStatus = (formData.get('reproStatus') as string) || '';
     const healthStatus = (formData.get('healthStatus') as string) || 'Sehat Walafiat';
     const purchasePrice = formData.get('buyPrice') ? parseFloat(formData.get('buyPrice') as string) : null;
     const feedCost = formData.get('feedCost') ? parseFloat(formData.get('feedCost') as string) : null;
 
-    const animalData = {
+    const payload = {
+      tag,
       type,
       breed,
       gender,
@@ -48,17 +58,18 @@ export async function createAnimal(formData: FormData) {
       healthStatus,
       purchasePrice,
       feedCost,
+      updatedAt: new Date().toISOString(),
     };
 
-    // Menggunakan upsert agar aman jika tag sudah ada
-    await prisma.animal.upsert({
-      where: { tag: tag },
-      update: animalData,
-      create: {
-        tag: tag,
-        ...animalData,
-      },
-    });
+    // Fitur upsert bawaan Supabase SDK berbasis kolom unik 'tag'
+    const { error } = await supabase
+      .from('Animal')
+      .upsert(payload, { onConflict: 'tag' });
+
+    if (error) {
+      console.error("Supabase API Error:", error);
+      return { success: false, message: `Gagal menyimpan: ${error.message}` };
+    }
 
     revalidatePath('/');
     return { success: true, message: 'Data ternak berhasil disimpan!' };
