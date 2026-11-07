@@ -3,16 +3,23 @@ import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
+// Fungsi helper untuk mendapatkan instance Prisma secara aman (Lazy Initialization)
+function getPrismaClient() {
+  if (globalForPrisma.prisma) {
+    return globalForPrisma.prisma;
+  }
+  const client = new PrismaClient({
     log: ['error'],
   });
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = client;
+  }
+  return client;
+}
 
 export async function GET() {
   try {
+    const prisma = getPrismaClient();
     const animals = await prisma.animal.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -39,7 +46,6 @@ export async function POST(request: Request) {
 
     const tagValue = String(body.tag);
 
-    // Menggunakan type inference standar tanpa definisi manual yang kaku
     const updateData = {
       type: body.type ? String(body.type) : 'Sapi',
       breed: body.breed ? String(body.breed) : '',
@@ -59,6 +65,7 @@ export async function POST(request: Request) {
       feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
     };
 
+    const prisma = getPrismaClient();
     const animal = await prisma.animal.upsert({
       where: { tag: tagValue },
       update: updateData as any,
@@ -71,6 +78,6 @@ export async function POST(request: Request) {
     return NextResponse.json(animal);
   } catch (error) {
     console.error('Error saving animal:', error);
-    return NextResponse.json({ error: 'Gagal menyimpan ke database' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal menyimpan data' }, { status: 500 });
   }
 }
