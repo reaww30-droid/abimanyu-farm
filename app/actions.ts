@@ -3,7 +3,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 
-// Inisialisasi Supabase Client menggunakan URL dan Public Anon Key
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tsojjspoqaaieelliygl.supabase.co';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
@@ -39,7 +38,6 @@ export async function createAnimal(formData: FormData) {
     const weight = formData.get('weight') ? parseFloat(formData.get('weight') as string) : null;
     const age = formData.get('age') ? parseInt(formData.get('age') as string) : null;
     
-    // Pemetaan input form ke nama kolom Supabase
     const milkProduction = formData.get('milkVolume') ? parseFloat(formData.get('milkVolume') as string) : null;
     const lactationStatus = (formData.get('reproStatus') as string) || '';
     const healthStatus = (formData.get('healthStatus') as string) || 'Sehat Walafiat';
@@ -58,10 +56,8 @@ export async function createAnimal(formData: FormData) {
       healthStatus,
       purchasePrice,
       feedCost,
-      updatedAt: new Date().toISOString(),
     };
 
-    // Fitur upsert bawaan Supabase SDK berbasis kolom unik 'tag'
     const { error } = await supabase
       .from('Animal')
       .upsert(payload, { onConflict: 'tag' });
