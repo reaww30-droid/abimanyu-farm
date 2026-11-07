@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 // Mencegah pembuatan instance Prisma berlebih di lingkungan serverless (Vercel)
@@ -30,7 +30,8 @@ export async function POST(request: Request) {
 
     const cleanTag = body.tag.trim();
 
-    const animalData = {
+    // Menggunakan tipe data yang kompatibel dengan Prisma Input
+    const animalData: Prisma.AnimalCreateInput = {
       tag: cleanTag,
       type: body.type || 'Sapi',
       breed: body.breed || 'FH',
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
 
     const animal = await prisma.animal.upsert({
       where: { tag: cleanTag },
-      update: animalData,
+      update: animalData as Prisma.AnimalUpdateInput,
       create: animalData,
     });
 
