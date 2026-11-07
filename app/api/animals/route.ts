@@ -40,25 +40,25 @@ export async function POST(request: Request) {
     const tagValue = String(body.tag);
 
     const payload = {
-      tag: tagValue,
-      type: body.type ? String(body.type) : 'Sapi',
-      breed: body.breed ? String(body.breed) : '',
-      gender: body.gender ? String(body.gender) : '',
-      weight: body.weight !== undefined && body.weight !== '' ? Number(body.weight) : null,
-      age: body.age !== undefined && body.age !== '' ? Number(body.age) : null,
-      milkProduction: body.milkProduction !== undefined && body.milkProduction !== '' ? Number(body.milkProduction) : null,
-      maleCalves: body.maleCalves !== undefined && body.maleCalves !== '' ? Number(body.maleCalves) : null,
-      femaleCalves: body.femaleCalves !== undefined && body.femaleCalves !== '' ? Number(body.femaleCalves) : null,
-      lastCalvingDate: parseDate(body.lastCalvingDate),
-      lactationStatus: body.lactationStatus ? String(body.lactationStatus) : '',
-      healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat Walafiat',
-      lastVaccineDate: parseDate(body.lastVaccineDate),
-      vaccineType: body.vaccineType ? String(body.vaccineType) : '',
-      vetName: body.vetName ? String(body.vetName) : '',
-      purchasePrice: body.purchasePrice !== undefined && body.purchasePrice !== '' ? Number(body.purchasePrice) : null,
-      feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
-    };
-
+  tag: tagValue,
+  type: body.type ? String(body.type) : 'Sapi',
+  breed: body.breed ? String(body.breed) : '',
+  gender: body.gender ? String(body.gender) : '',
+  weight: body.weight !== undefined && body.weight !== '' ? Number(body.weight) : null,
+  age: body.age !== undefined && body.age !== '' ? Number(body.age) : null,
+  milkProduction: body.milkProduction !== undefined && body.milkProduction !== '' ? Number(body.milkProduction) : null,
+  maleCalves: body.maleCalves !== undefined && body.maleCalves !== '' ? Number(body.maleCalves) : null,
+  femaleCalves: body.femaleCalves !== undefined && body.femaleCalves !== '' ? Number(body.femaleCalves) : null,
+  lastCalvingDate: parseDate(body.lastCalvingDate),
+  lactationStatus: body.lactationStatus ? String(body.lactationStatus) : '',
+  healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat Walafiat',
+  lastVaccineDate: parseDate(body.lastVaccineDate),
+  vaccineType: body.vaccineType ? String(body.vaccineType) : '',
+  vetName: body.vetName ? String(body.vetName) : '',
+  purchasePrice: body.purchasePrice !== undefined && body.purchasePrice !== '' ? Number(body.purchasePrice) : null,
+  feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
+  updatedAt: new Date().toISOString(), // <--- Tambahkan baris ini
+};
     const { data, error } = await supabase
       .from('Animal')
       .upsert(payload, { onConflict: 'tag' })
