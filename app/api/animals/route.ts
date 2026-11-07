@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tag hewan wajib diisi' }, { status: 400 });
     }
 
-    const parseDate = (val: unknown): Date | null => {
+    const parseDate = (val: unknown) => {
       if (!val || val === '') return null;
       const date = new Date(val as string | number | Date);
       return isNaN(date.getTime()) ? null : date;
@@ -39,25 +39,8 @@ export async function POST(request: Request) {
 
     const tagValue = String(body.tag);
 
-    // Tipe data eksplisit agar aman dari error TypeScript strict mode
-    const updateData: {
-      type: string;
-      breed: string;
-      gender: string;
-      weight: number | null;
-      age: number | null;
-      milkProduction: number | null;
-      maleCalves: number | null;
-      femaleCalves: number | null;
-      lastCalvingDate: Date | null;
-      lactationStatus: string;
-      healthStatus: string;
-      lastVaccineDate: Date | null;
-      vaccineType: string;
-      vetName: string;
-      purchasePrice: number | null;
-      feedCost: number | null;
-    } = {
+    // Menggunakan type inference standar tanpa definisi manual yang kaku
+    const updateData = {
       type: body.type ? String(body.type) : 'Sapi',
       breed: body.breed ? String(body.breed) : '',
       gender: body.gender ? String(body.gender) : '',
@@ -78,11 +61,11 @@ export async function POST(request: Request) {
 
     const animal = await prisma.animal.upsert({
       where: { tag: tagValue },
-      update: updateData,
+      update: updateData as any,
       create: {
         tag: tagValue,
         ...updateData,
-      },
+      } as any,
     });
 
     return NextResponse.json(animal);
