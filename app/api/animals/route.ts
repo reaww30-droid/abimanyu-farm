@@ -1,12 +1,10 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
-// Mencegah pembuatan instance Prisma berlebih di lingkungan serverless (Vercel)
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// GET: Mengambil seluruh data ternak dari database
 export async function GET() {
   try {
     const animals = await prisma.animal.findMany({
@@ -19,7 +17,6 @@ export async function GET() {
   }
 }
 
-// POST: Menambah atau Memperbarui (Upsert) data ternak berdasarkan tag
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -30,8 +27,7 @@ export async function POST(request: Request) {
 
     const cleanTag = body.tag.trim();
 
-    // Menggunakan tipe data yang kompatibel dengan Prisma Input
-    const animalData: Prisma.AnimalCreateInput = {
+    const animalData = {
       tag: cleanTag,
       type: body.type || 'Sapi',
       breed: body.breed || 'FH',
@@ -51,20 +47,32 @@ export async function POST(request: Request) {
       vet: body.vet || '',
     };
 
-    const animal = await prisma.animal.upsert({
-      where: { tag: cleanTag },
-      update: animalData as Prisma.AnimalUpdateInput,
-      create: animalData,
+    let result;
+    // Cek apakah data dengan tag tersebut sudah ada
+    const existing = await prisma.animal.findUnique({
+      where: { tag: cleanTag }
     });
 
-    return NextResponse.json({ success: true, data: animal });
+    if (existing) {
+      // Jika ada, lakukan update berdasarkan ID yang ada
+      result = await prisma.animal.update({
+        where: { id: existing.id },
+        data: animalData,
+      });
+    } else {
+      // Jika belum ada, buat baru
+      result = await prisma.animal.create({
+        data: animalData,
+      });
+    }
+
+    return NextResponse.json({ success: true, data: result });
   } catch (error) {
     console.error('API Error POST:', error);
     return NextResponse.json({ success: false, message: 'Gagal menyimpan ke database' }, { status: 500 });
   }
 }
 
-// DELETE: Menghapus data ternak berdasarkan ID
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
