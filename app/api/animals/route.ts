@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// Memaksa Next.js agar tidak merender halaman ini secara statis saat build
-export const dynamic = 'force-dynamic';
-
-// Singleton pattern agar tidak kehabisan koneksi database
+// Singleton pattern agar tidak kehabisan koneksi database di serverless
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =
