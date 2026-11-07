@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Gunakan URL dan Key langsung sebagai pengaman agar tidak error saat build Vercel
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tsojjspoqaaieelliygl.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_JtpWksibdhiEj2NQGpSF3g_xDmTSxhS';
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Fungsi Helper untuk parsing tanggal
@@ -57,7 +59,6 @@ export async function POST(request: Request) {
       feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
     };
 
-    // Supabase menggunakan upsert dengan menentukan onConflict kolom unique (misal: 'tag')
     const { data, error } = await supabase
       .from('Animal')
       .upsert(payload, { onConflict: 'tag' })
