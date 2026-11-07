@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// Singleton pattern agar tidak kehabisan koneksi database di serverless
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =
@@ -12,7 +11,6 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// GET: Ambil semua data hewan
 export async function GET() {
   try {
     const animals = await prisma.animal.findMany({
@@ -25,41 +23,66 @@ export async function GET() {
   }
 }
 
-// POST: Tambah atau Update data hewan
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validasi tag wajib ada
     if (!body.tag) {
       return NextResponse.json({ error: 'Tag hewan wajib diisi' }, { status: 400 });
     }
 
-    // Memetakan data dengan konversi tipe data yang aman untuk Prisma
-    const animalData = {
-      tag: String(body.tag),
+    const parseDate = (val: unknown): Date | null => {
+      if (!val || val === '') return null;
+      const date = new Date(val as string | number | Date);
+      return isNaN(date.getTime()) ? null : date;
+    };
+
+    const tagValue = String(body.tag);
+
+    // Tipe data eksplisit agar aman dari error TypeScript strict mode
+    const updateData: {
+      type: string;
+      breed: string;
+      gender: string;
+      weight: number | null;
+      age: number | null;
+      milkProduction: number | null;
+      maleCalves: number | null;
+      femaleCalves: number | null;
+      lastCalvingDate: Date | null;
+      lactationStatus: string;
+      healthStatus: string;
+      lastVaccineDate: Date | null;
+      vaccineType: string;
+      vetName: string;
+      purchasePrice: number | null;
+      feedCost: number | null;
+    } = {
       type: body.type ? String(body.type) : 'Sapi',
       breed: body.breed ? String(body.breed) : '',
       gender: body.gender ? String(body.gender) : '',
-      weight: body.weight ? Number(body.weight) : null,
-      age: body.age ? Number(body.age) : null,
-      milkProduction: body.milkProduction ? Number(body.milkProduction) : null,
-      maleCalves: body.maleCalves ? Number(body.maleCalves) : null,
-      femaleCalves: body.femaleCalves ? Number(body.femaleCalves) : null,
-      lastCalvingDate: body.lastCalvingDate ? new Date(body.lastCalvingDate) : null,
+      weight: body.weight !== undefined && body.weight !== '' ? Number(body.weight) : null,
+      age: body.age !== undefined && body.age !== '' ? Number(body.age) : null,
+      milkProduction: body.milkProduction !== undefined && body.milkProduction !== '' ? Number(body.milkProduction) : null,
+      maleCalves: body.maleCalves !== undefined && body.maleCalves !== '' ? Number(body.maleCalves) : null,
+      femaleCalves: body.femaleCalves !== undefined && body.femaleCalves !== '' ? Number(body.femaleCalves) : null,
+      lastCalvingDate: parseDate(body.lastCalvingDate),
       lactationStatus: body.lactationStatus ? String(body.lactationStatus) : '',
       healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat Walafiat',
-      lastVaccineDate: body.lastVaccineDate ? new Date(body.lastVaccineDate) : null,
+      lastVaccineDate: parseDate(body.lastVaccineDate),
       vaccineType: body.vaccineType ? String(body.vaccineType) : '',
       vetName: body.vetName ? String(body.vetName) : '',
-      purchasePrice: body.purchasePrice ? Number(body.purchasePrice) : null,
-      feedCost: body.feedCost ? Number(body.feedCost) : null,
+      purchasePrice: body.purchasePrice !== undefined && body.purchasePrice !== '' ? Number(body.purchasePrice) : null,
+      feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
     };
 
     const animal = await prisma.animal.upsert({
-      where: { tag: animalData.tag },
-      update: animalData,
-      create: animalData,
+      where: { tag: tagValue },
+      update: updateData,
+      create: {
+        tag: tagValue,
+        ...updateData,
+      },
     });
 
     return NextResponse.json(animal);
