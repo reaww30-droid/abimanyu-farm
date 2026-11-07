@@ -1,29 +1,26 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tsojjspoqaaieelliygl.supabase.co';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Fungsi helper untuk mendapatkan instance Prisma secara aman (Lazy Initialization)
-function getPrismaClient() {
-  if (globalForPrisma.prisma) {
-    return globalForPrisma.prisma;
-  }
-  const client = new PrismaClient({
-    log: ['error'],
-  });
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = client;
-  }
-  return client;
-}
+// Fungsi Helper untuk parsing tanggal
+const parseDate = (val: unknown) => {
+  if (!val || val === '') return null;
+  const date = new Date(val as string | number | Date);
+  return isNaN(date.getTime()) ? null : date.toISOString();
+};
 
 export async function GET() {
   try {
-    const prisma = getPrismaClient();
-    const animals = await prisma.animal.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json(animals);
+    const { data, error } = await supabase
+      .from('Animal')
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+    return NextResponse.json(data || []);
   } catch (error) {
     console.error('Error fetching animals:', error);
     return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 });
@@ -38,15 +35,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tag hewan wajib diisi' }, { status: 400 });
     }
 
-    const parseDate = (val: unknown) => {
-      if (!val || val === '') return null;
-      const date = new Date(val as string | number | Date);
-      return isNaN(date.getTime()) ? null : date;
-    };
-
     const tagValue = String(body.tag);
 
-    const updateData = {
+    const payload = {
+      tag: tagValue,
       type: body.type ? String(body.type) : 'Sapi',
       breed: body.breed ? String(body.breed) : '',
       gender: body.gender ? String(body.gender) : '',
@@ -65,17 +57,19 @@ export async function POST(request: Request) {
       feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
     };
 
-    const prisma = getPrismaClient();
-    const animal = await prisma.animal.upsert({
-      where: { tag: tagValue },
-      update: updateData as any,
-      create: {
-        tag: tagValue,
-        ...updateData,
-      } as any,
-    });
+    // Supabase menggunakan upsert dengan menentukan onConflict kolom unique (misal: 'tag')
+    const { data, error } = await supabase
+      .from('Animal')
+      .upsert(payload, { onConflict: 'tag' })
+      .select()
+      .single();
 
-    return NextResponse.json(animal);
+    if (error) {
+      console.error('Supabase Error:', error);
+      throw error;
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error saving animal:', error);
     return NextResponse.json({ error: 'Gagal menyimpan data' }, { status: 500 });
