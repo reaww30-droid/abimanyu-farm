@@ -35,22 +35,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tag hewan wajib diisi' }, { status: 400 });
     }
 
+    // Memetakan data dengan konversi tipe data yang aman untuk Prisma
     const animalData = {
       tag: String(body.tag),
-      type: body.type || 'Sapi',
-      breed: body.breed || '',
-      gender: body.gender || '',
+      type: body.type ? String(body.type) : 'Sapi',
+      breed: body.breed ? String(body.breed) : '',
+      gender: body.gender ? String(body.gender) : '',
       weight: body.weight ? Number(body.weight) : null,
       age: body.age ? Number(body.age) : null,
       milkProduction: body.milkProduction ? Number(body.milkProduction) : null,
       maleCalves: body.maleCalves ? Number(body.maleCalves) : null,
       femaleCalves: body.femaleCalves ? Number(body.femaleCalves) : null,
-      lastCalvingDate: body.lastCalvingDate || null,
-      lactationStatus: body.lactationStatus || '',
-      healthStatus: body.healthStatus || 'Sehat Walafiat',
-      lastVaccineDate: body.lastVaccineDate || null,
-      vaccineType: body.vaccineType || '',
-      vetName: body.vetName || '',
+      lastCalvingDate: body.lastCalvingDate ? new Date(body.lastCalvingDate) : null,
+      lactationStatus: body.lactationStatus ? String(body.lactationStatus) : '',
+      healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat Walafiat',
+      lastVaccineDate: body.lastVaccineDate ? new Date(body.lastVaccineDate) : null,
+      vaccineType: body.vaccineType ? String(body.vaccineType) : '',
+      vetName: body.vetName ? String(body.vetName) : '',
       purchasePrice: body.purchasePrice ? Number(body.purchasePrice) : null,
       feedCost: body.feedCost ? Number(body.feedCost) : null,
     };
