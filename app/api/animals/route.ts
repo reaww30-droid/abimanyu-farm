@@ -1,18 +1,15 @@
-import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
 // GET: Mengambil seluruh data ternak dari database
 export async function GET() {
   try {
-    const animals = await prisma.animal.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json({ success: true, data: animals });
+    const animals = await prisma.animal.findMany();
+    return NextResponse.json(animals);
   } catch (error) {
-    console.error('Gagal mengambil data:', error);
-    return NextResponse.json({ success: false, message: 'Gagal mengambil data dari database.' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 });
   }
 }
 
