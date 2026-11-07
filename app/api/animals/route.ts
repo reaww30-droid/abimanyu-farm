@@ -1,93 +1,72 @@
-export const dynamic = 'force-dynamic';
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
+// Memaksa Next.js agar tidak merender halaman ini secara statis saat build
+export const dynamic = 'force-dynamic';
+
+// Singleton pattern agar tidak kehabisan koneksi database
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
-const prisma = globalForPrisma.prisma || new PrismaClient();
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ['error'],
+  });
+
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
+// GET: Ambil semua data hewan
 export async function GET() {
   try {
     const animals = await prisma.animal.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json({ success: true, data: animals });
+    return NextResponse.json(animals);
   } catch (error) {
-    console.error('API Error GET:', error);
-    return NextResponse.json({ success: false, message: 'Gagal mengambil data' }, { status: 500 });
+    console.error('Error fetching animals:', error);
+    return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 });
   }
 }
 
+// POST: Tambah atau Update data hewan
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Validasi tag wajib ada
     if (!body.tag) {
-      return NextResponse.json({ success: false, message: 'Tag wajib diisi.' }, { status: 400 });
+      return NextResponse.json({ error: 'Tag hewan wajib diisi' }, { status: 400 });
     }
 
-    const cleanTag = body.tag.trim();
-
-    // Mengirim tanggal sebagai string atau null sesuai skema
     const animalData = {
-      tag: cleanTag,
+      tag: String(body.tag),
       type: body.type || 'Sapi',
-      breed: body.breed || 'FH',
-      gender: body.gender || 'Betina',
-      weight: parseFloat(body.weight) || 0,
-      age: parseInt(body.age) || 0,
-      buyPrice: parseFloat(body.buyPrice) || 0,
-      feedCost: parseFloat(body.feedCost) || 0,
-      milkVolume: parseFloat(body.milkVolume) || 0,
-      maleCalves: parseInt(body.maleCalves) || 0,
-      femaleCalves: parseInt(body.femaleCalves) || 0,
-      lastCalvingDate: body.lastCalvingDate ? String(body.lastCalvingDate) : null,
-      reproStatus: body.reproStatus || 'Laktasi',
-      healthStatus: body.healthStatus || 'Sehat',
-      lastVaccineDate: body.lastVaccineDate ? String(body.lastVaccineDate) : null,
-      vaccineName: body.vaccineName || '',
-      vet: body.vet || '',
+      breed: body.breed || '',
+      gender: body.gender || '',
+      weight: body.weight ? Number(body.weight) : null,
+      age: body.age ? Number(body.age) : null,
+      milkProduction: body.milkProduction ? Number(body.milkProduction) : null,
+      maleCalves: body.maleCalves ? Number(body.maleCalves) : null,
+      femaleCalves: body.femaleCalves ? Number(body.femaleCalves) : null,
+      lastCalvingDate: body.lastCalvingDate || null,
+      lactationStatus: body.lactationStatus || '',
+      healthStatus: body.healthStatus || 'Sehat Walafiat',
+      lastVaccineDate: body.lastVaccineDate || null,
+      vaccineType: body.vaccineType || '',
+      vetName: body.vetName || '',
+      purchasePrice: body.purchasePrice ? Number(body.purchasePrice) : null,
+      feedCost: body.feedCost ? Number(body.feedCost) : null,
     };
 
-    let result;
-    const existing = await prisma.animal.findUnique({
-      where: { tag: cleanTag }
+    const animal = await prisma.animal.upsert({
+      where: { tag: animalData.tag },
+      update: animalData,
+      create: animalData,
     });
 
-    if (existing) {
-      result = await prisma.animal.update({
-        where: { id: existing.id },
-        data: animalData,
-      });
-    } else {
-      result = await prisma.animal.create({
-        data: animalData,
-      });
-    }
-
-    return NextResponse.json({ success: true, data: result });
+    return NextResponse.json(animal);
   } catch (error) {
-    console.error('API Error POST:', error);
-    return NextResponse.json({ success: false, message: 'Gagal menyimpan ke database' }, { status: 500 });
-  }
-}
-
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json({ success: false, message: 'ID tidak ditemukan.' }, { status: 400 });
-    }
-
-    await prisma.animal.delete({
-      where: { id: id },
-    });
-
-    return NextResponse.json({ success: true, message: 'Data berhasil dihapus.' });
-  } catch (error) {
-    console.error('Gagal menghapus data:', error);
-    return NextResponse.json({ success: false, message: 'Gagal menghapus data dari database.' }, { status: 500 });
+    console.error('Error saving animal:', error);
+    return NextResponse.json({ error: 'Gagal menyimpan ke database' }, { status: 500 });
   }
 }
