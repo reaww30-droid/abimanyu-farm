@@ -1,15 +1,21 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
-const prisma = new PrismaClient();
+// Mencegah pembuatan instance Prisma berlebih di lingkungan serverless (Vercel)
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 // GET: Mengambil seluruh data ternak dari database
 export async function GET() {
   try {
-    const animals = await prisma.animal.findMany();
-    return NextResponse.json(animals);
+    const animals = await prisma.animal.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return NextResponse.json({ success: true, data: animals });
   } catch (error) {
-    return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 });
+    console.error('API Error GET:', error);
+    return NextResponse.json({ success: false, message: 'Gagal mengambil data' }, { status: 500 });
   }
 }
 
@@ -36,10 +42,10 @@ export async function POST(request: Request) {
       milkVolume: parseFloat(body.milkVolume) || 0,
       maleCalves: parseInt(body.maleCalves) || 0,
       femaleCalves: parseInt(body.femaleCalves) || 0,
-      lastCalvingDate: body.lastCalvingDate || null,
+      lastCalvingDate: body.lastCalvingDate ? new Date(body.lastCalvingDate) : null,
       reproStatus: body.reproStatus || 'Laktasi',
       healthStatus: body.healthStatus || 'Sehat',
-      lastVaccineDate: body.lastVaccineDate || null,
+      lastVaccineDate: body.lastVaccineDate ? new Date(body.lastVaccineDate) : null,
       vaccineName: body.vaccineName || '',
       vet: body.vet || '',
     };
@@ -52,7 +58,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: animal });
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Error POST:', error);
     return NextResponse.json({ success: false, message: 'Gagal menyimpan ke database' }, { status: 500 });
   }
 }
