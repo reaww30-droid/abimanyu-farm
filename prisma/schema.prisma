@@ -4,32 +4,29 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Animal {
-  id              String   @id @default(cuid())
-  tag             String   @unique
-  type            String
-  breed           String
-  gender          String
-  weight          Float
-  age             Int
-  milkVolume      Float    @default(0)
-  maleCalves      Int      @default(0)
-  femaleCalves    Int      @default(0)
-  lastCalvingDate String?
-  reproStatus     String
-  healthStatus    String
-  lastVaccineDate String?
-  vaccineName     String?
-  vet             String?
-  buyPrice        Float    @default(0)
-  feedCost        Float    @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+generator client {
+  provider = "prisma-client-js"
 }
 
-model User {
-  id       String @id @default(cuid())
-  username String @unique
-  password String
-  role     String
+model Animal {
+    id              String    @id @default(uuid())
+    tag             String    @unique
+    type            String    @default("Sapi")
+    breed           String?
+    gender          String?
+    weight          Float?
+    age             Int?
+    milkProduction  Float?
+    maleCalves      Int?
+    femaleCalves    Int?
+    lastCalvingDate DateTime?
+    lactationStatus String?
+    healthStatus    String?   @default("Sehat Walafiat")
+    lastVaccineDate DateTime?
+    vaccineType     String?
+    vetName         String?
+    purchasePrice   Float?
+    feedCost        Float?
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
 }
