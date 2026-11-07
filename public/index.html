@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abimanyu Farm - Dairy & Livestock Management</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- JsBarcode -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- HTML5 QR/Barcode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen transition-colors duration-300">
+
+    <!-- Screen 1: Login -->
+    <div id="loginScreen" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-8 transition-all">
+            <div class="text-center mb-6">
+                <div class="bg-brand-500/10 text-brand-600 dark:text-brand-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+                    <i class="fa-solid fa-cow"></i>
+                </div>
+                <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Abimanyu Farm</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Sistem Perah & Rekam Medis Sapi Modern</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" id="loginUsername" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm transition" placeholder="Username">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="loginPassword" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm transition" placeholder="••••••••">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-brand-600/30 transition duration-200 flex items-center justify-center gap-2 text-sm">
+                    Masuk Ke Dashboard <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 text-center">
+                <p class="text-xs text-slate-400 mb-2">Kredensial Demo:</p>
+                <div class="flex justify-center gap-2">
+                    <button onclick="quickLogin('admin', 'admin123')" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 font-medium transition">
+                        🔑 Admin (Super)
+                    </button>
+                    <button onclick="quickLogin('budi', 'budi123')" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 font-medium transition">
+                        👨‍⚕️ Budi (Medis)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: Dashboard Utama -->
+    <div id="mainDashboard" class="hidden">
+        <!-- Top Navigation Bar -->
+        <nav class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-brand-600 text-white w-9 h-9 rounded-xl flex items-center justify-center font-bold text-lg shadow-md shadow-brand-600/20">
+                            <i class="fa-solid fa-cow"></i>
+                        </div>
+                        <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white">Abimanyu Farm <span class="text-brand-600 dark:text-brand-400 text-xs font-semibold px-2 py-0.5 bg-brand-500/10 rounded-full border border-brand-500/20">Dairy Pro</span></span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <button onclick="toggleDarkMode()" title="Ubah Tema" class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition">
+                            <i id="themeIcon" class="fa-solid fa-moon"></i>
+                        </button>
+
+                        <div class="text-right hidden sm:block px-2">
+                            <div id="navUserAuth" class="font-bold text-sm text-slate-800 dark:text-slate-100">Admin</div>
+                            <div id="navUserRole" class="text-[10px] uppercase tracking-wider font-semibold text-brand-600 dark:text-brand-400">Super Admin</div>
+                        </div>
+
+                        <button onclick="openManageUsersModal()" title="Kelola Admin" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm transition">
+                            <i class="fa-solid fa-users-gear"></i>
+                        </button>
+                        <button onclick="exportToCSV()" title="Ekspor Data Excel/CSV" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-2 rounded-xl text-xs shadow-md transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-excel"></i> <span class="hidden sm:inline">Ekspor</span>
+                        </button>
+                        <button onclick="handleLogout()" title="Keluar" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 p-2 rounded-xl text-sm font-semibold transition">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+            <!-- Action Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800/60 p-4 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 backdrop-blur-sm">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openAnimalModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md shadow-brand-600/20 text-sm flex items-center gap-2 transition">
+                        <i class="fa-solid fa-plus text-xs"></i> Tambah Ternak
+                    </button>
+                    <button onclick="openScannerModal()" class="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 font-bold px-4 py-2.5 rounded-xl shadow-md text-sm flex items-center gap-2 transition">
+                        <i class="fa-solid fa-qrcode text-xs"></i> Scan Barcode Ear Tag
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <div class="flex items-center bg-slate-100 dark:bg-slate-700/50 p-1 rounded-xl border border-slate-200 dark:border-slate-600">
+                        <button id="viewGridBtn" onclick="switchView('grid')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-white dark:bg-slate-800 shadow-sm text-brand-600 dark:text-brand-400">
+                            <i class="fa-solid fa-grip"></i> Grid
+                        </button>
+                        <button id="viewTableBtn" onclick="switchView('table')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-500 dark:text-slate-400">
+                            <i class="fa-solid fa-list"></i> Tabel
+                        </button>
+                    </div>
+
+                    <select id="typeFilter" onchange="applyFilters()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="ALL">Semua Ternak</option>
+                        <option value="Sapi">🐄 Sapi Only</option>
+                        <option value="Kambing">🐐 Kambing Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Milk Production</p>
+                        <h3 id="statTotalMilk" class="text-2xl font-black text-sky-600 dark:text-sky-400 mt-0.5">0 Liter/Hari</h3>
+                        <p id="statActiveMilking" class="text-xs text-slate-400 mt-1 font-medium">0 Indukan Laktasi</p>
+                    </div>
+                    <div class="w-12 h-12 bg-sky-500/10 text-sky-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-bottle-droplet"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Anak Lahir (Pedet/Cempe)</p>
+                        <h3 id="statTotalCalves" class="text-2xl font-black text-brand-600 dark:text-brand-400 mt-0.5">0 Ekor</h3>
+                        <p id="statCalfGenderRatio" class="text-xs text-slate-400 mt-1 font-medium">0 ♂ Jantan | 0 ♀ Betina</p>
+                    </div>
+                    <div class="w-12 h-12 bg-brand-500/10 text-brand-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-baby-carriage"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Modal & Pakan</p>
+                        <h3 id="statTotalExpense" class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-0.5">Rp 0</h3>
+                        <p class="text-xs text-slate-400 mt-1 font-medium">Modal Beli + Biaya Pakan</p>
+                    </div>
+                    <div class="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Est. Pendapatan Susu/Bln</p>
+                        <h3 id="statMilkRevenue" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">Rp 0</h3>
+                        <p class="text-xs text-emerald-500 font-semibold mt-1">@ Rp 9.000 / Liter</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart & Reminder Widget Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60">
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-base">
+                        <i class="fa-solid fa-chart-line text-brand-600"></i> Ringkasan Hasil Susu & Operasional
+                    </h3>
+                    <div class="h-64">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2 text-base">
+                            <i class="fa-solid fa-bell text-amber-500"></i> Jadwal Suntik & IB (Kawin)
+                        </h3>
+                        <div id="reminderList" class="space-y-2 text-xs max-h-56 overflow-y-auto pr-1"></div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                        <button onclick="addQuickReminder()" class="w-full text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl font-bold transition">
+                            + Tambah Pengingat Baru
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Animals Display Section -->
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h3 class="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-paw text-brand-600"></i> Data Sapi Perah & Kambing
+                    </h3>
+                    <div class="relative max-w-xs w-full">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Cari Ear Tag ID / Ras..." class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div id="gridViewContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+                <div id="tableViewContainer" class="hidden bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/60 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-slate-700/40 text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                                    <th class="p-4">Ear Tag</th>
+                                    <th class="p-4">Jenis & Ras</th>
+                                    <th class="p-4">Hasil Susu</th>
+                                    <th class="p-4">Riwayat Beranak</th>
+                                    <th class="p-4">Vaksin & Suntik</th>
+                                    <th class="p-4">Biaya Pakan</th>
+                                    <th class="p-4">Kondisi</th>
+                                    <th class="p-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="animalTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50 text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal: Form Tambah/Edit Hewan -->
+    <div id="animalModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+                <h3 id="modalAnimalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Tambah Data Hewan Baru</h3>
+                <button onclick="closeAnimalModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <form id="animalForm" onsubmit="saveAnimal(event)" class="space-y-4">
+                <input type="hidden" id="editAnimalId">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Jenis Hewan</label>
+                        <select id="formType" onchange="autoGenerateTagPrefix()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-brand-500">
+                            <option value="Sapi">Sapi 🐄</option>
+                            <option value="Kambing">Kambing 🐐</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Kode Barcode Ear Tag</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="formTag" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-mono font-bold focus:ring-2 focus:ring-brand-500" placeholder="TAG-SAP-001">
+                            <button type="button" onclick="generateRandomEarTag()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 px-3 py-2.5 rounded-xl text-xs font-bold transition">Acak</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Ras / Breed</label>
+                        <input type="text" id="formBreed" placeholder="Friesian Holstein (FH) / Peranakan Etawa" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Jenis Kelamin</label>
+                        <select id="formGender" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs">
+                            <option value="Betina">Betina (Indukan Perah)</option>
+                            <option value="Jantan">Jantan (Pejantan)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Berat Badan (Kg)</label>
+                        <input type="number" step="0.1" id="formWeight" required placeholder="450" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Usia (Bulan)</label>
+                        <input type="number" id="formAge" required placeholder="30" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs">
+                    </div>
+                </div>
+
+                <!-- Bagian Khusus Perah & Reproduksi -->
+                <div class="bg-sky-500/10 p-4 rounded-2xl border border-sky-500/20 space-y-3">
+                    <h4 class="font-bold text-sky-700 dark:text-sky-400 text-xs uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-bottle-droplet"></i> Produksi Susu & Data Reproduksi (Beranak)
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Hasil Susu (Liter / Hari)</label>
+                            <input type="number" step="0.5" id="formMilkVolume" placeholder="18" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Anak Jantan Lahir (Ekor)</label>
+                            <input type="number" id="formMaleCalves" min="0" placeholder="1" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Anak Betina Lahir (Ekor)</label>
+                            <input type="number" id="formFemaleCalves" min="0" placeholder="2" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs font-semibold">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Tanggal Terakhir Beranak</label>
+                            <input type="date" id="formLastCalvingDate" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status Laktasi / Reproduksi</label>
+                            <select id="formReproStatus" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs">
+                                <option value="Laktasi (Aktif diperah)">Laktasi (Aktif diperah)</option>
+                                <option value="Kering Kandang (Hamil Tua)">Kering Kandang (Hamil Tua)</option>
+                                <option value="Bunting">Bunting</option>
+                                <option value="Dara / Belum Pernah Beranak">Dara / Belum Beranak</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health & Vaccine Section -->
+                <div class="bg-brand-500/10 p-4 rounded-2xl border border-brand-500/20 space-y-3">
+                    <h4 class="font-bold text-brand-700 dark:text-brand-400 text-xs uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-syringe"></i> Rekam Medis, Vaksin & Suntik IB
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status Kesehatan</label>
+                            <select id="formHealthStatus" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs">
+                                <option value="Sehat">Sehat Walafiat</option>
+                                <option value="Mastitis (Radang Ambing)">Mastitis (Radang Ambing)</option>
+                                <option value="Dalam Perawatan">Dalam Perawatan</option>
+                                <option value="Karantina">Karantina</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Tanggal Suntik / Vaksin Terakhir</label>
+                            <input type="date" id="formLastVaccineDate" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Jenis Vaksin / Vitamin / Obat</label>
+                            <input type="text" id="formVaccineName" placeholder="Vaksin PMK / Vitamin B-Complex" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Dokter / Mantri Penanggung Jawab</label>
+                            <input type="text" id="formVet" placeholder="drh. Rian Subekti" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Section Highlight -->
+                <div class="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 space-y-3">
+                    <h4 class="font-bold text-amber-700 dark:text-amber-400 text-xs uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-coins"></i> Nilai Beli & Biaya Operasional Pakan
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Harga Beli Sapi (Rp)</label>
+                            <input type="number" id="formBuyPrice" required min="0" placeholder="18000000" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Biaya Pakan / Bulan (Rp)</label>
+                            <input type="number" id="formFeedCost" min="0" placeholder="1200000" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs font-semibold">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeAnimalModal()" class="px-4 py-2 border rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs shadow-md transition">Simpan Data Hewan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Card Record Result -->
+    <div id="scanResultModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-id-card text-brand-600"></i> Rekam Medis & Produksi Sapi
+                </h3>
+                <button onclick="closeScanResultModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div id="scanCardContent" class="space-y-4"></div>
+
+            <div class="mt-6 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                <button onclick="closeScanResultModal()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-xl text-xs font-bold">Tutup</button>
+                <button id="btnPrintTagModal" onclick="" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md transition">
+                    <i class="fa-solid fa-print mr-1"></i> Cetak Tag Barcode
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Camera Scanner -->
+    <div id="scannerModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-camera text-amber-500 mr-2"></i> Pindai Barcode Ear Tag</h3>
+                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div id="reader" class="w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700"></div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <p class="text-xs text-slate-400 mb-2">Atau Gunakan Simulasi Quick Select Tag:</p>
+                <select id="quickSelectScan" onchange="simulateScan(this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs">
+                    <option value="">-- Pilih Barcode Ear Tag --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Manage Users -->
+    <div id="manageUsersModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-users-gear text-brand-600 mr-2"></i> Kelola Admin & Staf</h3>
+                <button onclick="closeManageUsersModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <form onsubmit="handleAddUser(event)" class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 mb-4 space-y-3">
+                <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400">Tambah Akun Pengelola</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="newUsername" required placeholder="Username" class="bg-white dark:bg-slate-800 border rounded-xl p-2 text-xs">
+                    <input type="password" id="newPassword" required placeholder="Password" class="bg-white dark:bg-slate-800 border rounded-xl p-2 text-xs">
+                    <select id="newRole" class="bg-white dark:bg-slate-800 border rounded-xl p-2 text-xs">
+                        <option value="Super Admin">Super Admin</option>
+                        <option value="Staf Medis">Staf Medis</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 rounded-xl text-xs transition">
+                    + Tambah Admin Baru
+                </button>
+            </form>
+
+            <div class="space-y-2 max-h-48 overflow-y-auto" id="usersListContainer"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Print Barcode Tag -->
+    <div id="printTagModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+            <h3 class="font-bold text-slate-900 dark:text-white text-base">Cetak Label Ear Tag Barcode</h3>
+            
+            <div class="border-2 border-dashed border-brand-500/80 p-4 rounded-2xl bg-white dark:bg-slate-800 shadow-sm inline-block w-full overflow-hidden">
+                <p id="printTagTitle" class="font-bold text-sm uppercase tracking-wider text-slate-800 dark:text-slate-100">TAG-SAP-001</p>
+                
+                <div class="w-full flex justify-center items-center my-3 overflow-hidden">
+                    <svg id="barcodeCanvas" class="max-w-full"></svg>
+                </div>
+                
+                <p id="printTagSub" class="text-[11px] font-medium text-slate-400">Sapi FH Perah - Abimanyu Farm</p>
+            </div>
+
+            <div class="flex justify-center gap-2 pt-1">
+                <button onclick="closePrintModal()" class="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Tutup</button>
+                <button onclick="window.print()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Cetak Label
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script>
+        let currentView = 'grid';
+        let isDarkMode = localStorage.getItem('ft_theme') === 'dark';
+
+        let animals = [];
+
+        let users = JSON.parse(localStorage.getItem('ft_users')) || [
+            { username: 'admin', password: 'admin123', role: 'Super Admin' },
+            { username: 'budi', password: 'budi123', role: 'Staf Medis' }
+        ];
+
+        let reminders = JSON.parse(localStorage.getItem('ft_reminders')) || [
+            { id: 1, title: 'Jadwal Suntik IB (Sapi TAG-SAP-002)', date: '2026-11-20', done: false },
+            { id: 2, title: 'Pemeriksaan Mastitis Ambing Sapi', date: '2026-11-15', done: false }
+        ];
+
+        let currentUser = JSON.parse(localStorage.getItem('ft_auth_user')) || null;
+        let financeChartInstance = null;
+        let html5QrcodeScanner = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            if (currentUser) {
+                showDashboard();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainDashboard').classList.add('hidden');
+            }
+        });
+
+        async function fetchAnimalsFromDB() {
+            try {
+                const response = await fetch('/api/animals');
+                const result = await response.json();
+                if (result.success) {
+                    animals = result.data.map(item => ({
+                        id: item.id,
+                        tag: item.tag,
+                        type: item.type,
+                        breed: item.breed,
+                        gender: item.gender,
+                        weight: item.weight,
+                        age: item.age,
+                        buyPrice: item.buyPrice,
+                        feedCost: item.feedCost,
+                        milkVolume: item.milkVolume || 0,
+                        maleCalves: item.maleCalves || 0,
+                        femaleCalves: item.femaleCalves || 0,
+                        lastCalvingDate: item.lastCalvingDate || '',
+                        reproStatus: item.reproStatus || 'Laktasi (Aktif diperah)',
+                        healthStatus: item.healthStatus,
+                        lastVaccineDate: item.lastVaccineDate || '',
+                        vaccineName: item.vaccineName || '',
+                        vet: item.vet || ''
+                    }));
+                    
+                    renderDisplay();
+                    renderStatsAndChart();
+                }
+            } catch (error) {
+                console.error('Gagal memuat data dari database:', error);
+            }
+        }
+
+        function initTheme() {
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').className = 'fa-solid fa-sun';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').className = 'fa-solid fa-moon';
+            }
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('ft_theme', isDarkMode ? 'dark' : 'light');
+            initTheme();
+            renderStatsAndChart();
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+            const found = users.find(x => x.username === u && x.password === p);
+
+            if (found) {
+                currentUser = found;
+                localStorage.setItem('ft_auth_user', JSON.stringify(currentUser));
+                showDashboard();
+            } else {
+                alert('Username atau password salah!');
+            }
+        }
+
+        function quickLogin(u, p) {
+            document.getElementById('loginUsername').value = u;
+            document.getElementById('loginPassword').value = p;
+            handleLogin(new Event('submit'));
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('ft_auth_user');
+            currentUser = null;
+            document.getElementById('mainDashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            document.getElementById('navUserAuth').innerText = currentUser.username;
+            document.getElementById('navUserRole').innerText = currentUser.role;
+
+            fetchAnimalsFromDB();
+            renderReminders();
+        }
+
+        function saveData() {
+            localStorage.setItem('ft_users', JSON.stringify(users));
+            localStorage.setItem('ft_reminders', JSON.stringify(reminders));
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const gridBtn = document.getElementById('viewGridBtn');
+            const tableBtn = document.getElementById('viewTableBtn');
+
+            if (view === 'grid') {
+                gridBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-white dark:bg-slate-800 shadow-sm text-brand-600 dark:text-brand-400';
+                tableBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-500 dark:text-slate-400';
+                document.getElementById('gridViewContainer').classList.remove('hidden');
+                document.getElementById('tableViewContainer').classList.add('hidden');
+            } else {
+                tableBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-white dark:bg-slate-800 shadow-sm text-brand-600 dark:text-brand-400';
+                gridBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-500 dark:text-slate-400';
+                document.getElementById('tableViewContainer').classList.remove('hidden');
+                document.getElementById('gridViewContainer').classList.add('hidden');
+            }
+            renderDisplay();
+        }
+
+        function renderDisplay() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filterType = document.getElementById('typeFilter').value;
+
+            const filtered = animals.filter(a => {
+                const matchSearch = a.tag.toLowerCase().includes(search) || a.breed.toLowerCase().includes(search);
+                const matchType = filterType === 'ALL' || a.type === filterType;
+                return matchSearch && matchType;
+            });
+
+            const gridContainer = document.getElementById('gridViewContainer');
+            const tbody = document.getElementById('animalTableBody');
+
+            if (filtered.length === 0) {
+                gridContainer.innerHTML = `<div class="col-span-full text-center p-12 bg-white dark:bg-slate-800 rounded-2xl border text-slate-400 text-sm">Tidak ada data ternak perah ditemukan.</div>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center p-8 text-slate-400">Tidak ada data.</td></tr>`;
+                return;
+            }
+
+            let gridHtml = '';
+            let tableHtml = '';
+
+            filtered.forEach(a => {
+                const totalCalves = Number(a.maleCalves || 0) + Number(a.femaleCalves || 0);
+
+                gridHtml += `
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-slate-700/60 hover:shadow-md transition space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-sm text-brand-600 dark:text-brand-400 cursor-pointer hover:underline" onclick="openScanResultModal('${a.tag}')">
+                                <i class="fa-solid fa-barcode mr-1"></i> ${a.tag}
+                            </span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${a.type === 'Sapi' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-brand-500/10 text-brand-600 dark:text-brand-400'}">
+                                ${a.type === 'Sapi' ? '🐄 Sapi Perah' : '🐐 Kambing Perah'}
+                            </span>
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-base text-slate-900 dark:text-white">${a.breed} (${a.gender})</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">${a.weight} Kg • ${a.age} Bulan</p>
+                        </div>
+
+                        <div class="bg-sky-500/10 p-3 rounded-xl space-y-1.5 text-xs">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 dark:text-slate-400 font-medium">🥛 Hasil Susu:</span>
+                                <span class="font-black text-sky-600 dark:text-sky-400 text-sm">${a.milkVolume || 0} Liter/Hari</span>
+                            </div>
+                            <div class="flex justify-between items-center text-[11px]">
+                                <span class="text-slate-400">👶 Riwayat Beranak:</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-200">${totalCalves} Anak (${a.maleCalves||0} ♂, ${a.femaleCalves||0} ♀)</span>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] border-t border-sky-500/20 pt-1">
+                                <span class="text-slate-400">Status:</span>
+                                <span class="font-bold text-brand-600 dark:text-brand-400">${a.reproStatus || 'Laktasi'}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-1 text-xs">
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${a.healthStatus === 'Sehat' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-500'}">
+                                ${a.healthStatus}
+                            </span>
+                            <div class="flex gap-2">
+                                <button onclick="openPrintModal('${a.tag}')" title="Cetak Tag" class="p-1.5 text-slate-400 hover:text-brand-600"><i class="fa-solid fa-print"></i></button>
+                                <button onclick="editAnimal('${a.id}')" title="Edit Data" class="p-1.5 text-slate-400 hover:text-sky-500"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteAnimal('${a.id}')" title="Hapus" class="p-1.5 text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                tableHtml += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition border-b border-slate-100 dark:border-slate-700/40">
+                        <td class="p-4 font-mono font-bold text-brand-600 dark:text-brand-400 cursor-pointer" onclick="openScanResultModal('${a.tag}')">${a.tag}</td>
+                        <td class="p-4 font-medium">${a.type} (${a.breed})</td>
+                        <td class="p-4 font-bold text-sky-600 dark:text-sky-400">${a.milkVolume || 0} L/Hari</td>
+                        <td class="p-4 font-medium">${totalCalves} Anak (${a.maleCalves||0} ♂, ${a.femaleCalves||0} ♀)</td>
+                        <td class="p-4 text-xs">${a.lastVaccineDate || 'Belum'} (${a.vaccineName || '-'})</td>
+                        <td class="p-4">Rp ${(Number(a.feedCost)||0).toLocaleString('id-ID')}</td>
+                        <td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/10 text-brand-600 dark:text-brand-400">${a.healthStatus}</span></td>
+                        <td class="p-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="openPrintModal('${a.tag}')" class="p-1 text-slate-400 hover:text-brand-600"><i class="fa-solid fa-print"></i></button>
+                                <button onclick="editAnimal('${a.id}')" class="p-1 text-slate-400 hover:text-sky-500"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteAnimal('${a.id}')" class="p-1 text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            gridContainer.innerHTML = gridHtml;
+            tbody.innerHTML = tableHtml;
+
+            const qSelect = document.getElementById('quickSelectScan');
+            qSelect.innerHTML = '<option value="">-- Pilih Barcode Ear Tag --</option>';
+            animals.forEach(a => {
+                qSelect.innerHTML += `<option value="${a.tag}">${a.tag} (${a.type} ${a.breed})</option>`;
+            });
+        }
+
+        function applyFilters() {
+            renderDisplay();
+        }
+
+        function renderStatsAndChart() {
+            let totalMilk = 0, totalMaleCalves = 0, totalFemaleCalves = 0, totalFeed = 0, totalBuy = 0;
+            let activeMilkingCount = 0;
+
+            animals.forEach(a => {
+                totalMilk += Number(a.milkVolume || 0);
+                totalMaleCalves += Number(a.maleCalves || 0);
+                totalFemaleCalves += Number(a.femaleCalves || 0);
+                totalFeed += Number(a.feedCost || 0);
+                totalBuy += Number(a.buyPrice || 0);
+                if (Number(a.milkVolume || 0) > 0) activeMilkingCount++;
+            });
+
+            const totalExpense = totalBuy + totalFeed;
+            const monthlyMilkRevenue = totalMilk * 30 * 9000;
+
+            document.getElementById('statTotalMilk').innerText = `${totalMilk} Liter/Hari`;
+            document.getElementById('statActiveMilking').innerText = `${activeMilkingCount} Indukan Laktasi`;
+            document.getElementById('statTotalCalves').innerText = `${totalMaleCalves + totalFemaleCalves} Ekor`;
+            document.getElementById('statCalfGenderRatio').innerText = `${totalMaleCalves} ♂ Jantan | ${totalFemaleCalves} ♀ Betina`;
+            document.getElementById('statTotalExpense').innerText = `Rp ${totalExpense.toLocaleString('id-ID')}`;
+            document.getElementById('statMilkRevenue').innerText = `Rp ${monthlyMilkRevenue.toLocaleString('id-ID')}`;
+
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            if (financeChartInstance) financeChartInstance.destroy();
+
+            const chartTextColor = isDarkMode ? '#cbd5e1' : '#475569';
+
+            financeChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Total Hasil Susu (L/Hari)', 'Total Anak (Ekor)', 'Est. Pendapatan Susu (Rp/Bln)', 'Modal & Pakan (Rp)'],
+                    datasets: [{
+                        data: [totalMilk, (totalMaleCalves + totalFemaleCalves), (monthlyMilkRevenue / 100000), (totalExpense / 1000000)],
+                        backgroundColor: ['#0284c7', '#2563eb', '#10b981', '#f43f5e'],
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: chartTextColor } },
+                        y: { ticks: { color: chartTextColor } }
+                    }
+                }
+            });
+        }
+
+        function openAnimalModal() {
+            document.getElementById('animalForm').reset();
+            document.getElementById('editAnimalId').value = '';
+            document.getElementById('modalAnimalTitle').innerText = 'Tambah Data Sapi / Kambing Perah';
+            autoGenerateTagPrefix();
+            document.getElementById('animalModal').classList.remove('hidden');
+        }
+
+        function closeAnimalModal() {
+            document.getElementById('animalModal').classList.add('hidden');
+        }
+
+        function autoGenerateTagPrefix() {
+            if (document.getElementById('editAnimalId').value) return;
+            const type = document.getElementById('formType').value;
+            const count = animals.filter(a => a.type === type).length + 1;
+            const code = type === 'Sapi' ? 'SAP' : 'KAM';
+            document.getElementById('formTag').value = `TAG-${code}-${String(count).padStart(3, '0')}`;
+        }
+
+        function generateRandomEarTag() {
+            const rand = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('formTag').value = `TAG-RAND-${rand}`;
+        }
+
+        async function saveAnimal(e) {
+            e.preventDefault();
+            
+            const editId = document.getElementById('editAnimalId').value;
+
+            const animalObj = {
+                id: editId || undefined,
+                tag: document.getElementById('formTag').value.trim(),
+                type: document.getElementById('formType').value,
+                breed: document.getElementById('formBreed').value || 'FH',
+                gender: document.getElementById('formGender').value,
+                weight: parseFloat(document.getElementById('formWeight').value) || 0,
+                age: parseInt(document.getElementById('formAge').value) || 0,
+                buyPrice: parseFloat(document.getElementById('formBuyPrice').value) || 0,
+                feedCost: parseFloat(document.getElementById('formFeedCost').value) || 0,
+                milkVolume: parseFloat(document.getElementById('formMilkVolume').value) || 0,
+                maleCalves: parseInt(document.getElementById('formMaleCalves').value) || 0,
+                femaleCalves: parseInt(document.getElementById('formFemaleCalves').value) || 0,
+                lastCalvingDate: document.getElementById('formLastCalvingDate').value || '',
+                reproStatus: document.getElementById('formReproStatus').value,
+                healthStatus: document.getElementById('formHealthStatus').value,
+                lastVaccineDate: document.getElementById('formLastVaccineDate').value,
+                vaccineName: document.getElementById('formVaccineName').value,
+                vet: document.getElementById('formVet').value || 'Dokter Mantri'
+            };
+
+            try {
+                const response = await fetch('/api/animals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(animalObj)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeAnimalModal();
+                    fetchAnimalsFromDB();
+                } else {
+                    alert(result.message || 'Gagal menyimpan data.');
+                }
+            } catch (error) {
+                console.error('Kesalahan jaringan:', error);
+                alert('Terjadi kesalahan saat menyimpan data ke server.');
+            }
+        }
+
+        function editAnimal(id) {
+            const a = animals.find(x => x.id === id);
+            if (!a) return;
+
+            document.getElementById('editAnimalId').value = a.id;
+            document.getElementById('formTag').value = a.tag;
+            document.getElementById('formType').value = a.type;
+            document.getElementById('formBreed').value = a.breed;
+            document.getElementById('formGender').value = a.gender;
+            document.getElementById('formWeight').value = a.weight;
+            document.getElementById('formAge').value = a.age;
+            document.getElementById('formBuyPrice').value = a.buyPrice;
+            document.getElementById('formFeedCost').value = a.feedCost;
+            document.getElementById('formMilkVolume').value = a.milkVolume || 0;
+            document.getElementById('formMaleCalves').value = a.maleCalves || 0;
+            document.getElementById('formFemaleCalves').value = a.femaleCalves || 0;
+            document.getElementById('formLastCalvingDate').value = a.lastCalvingDate || '';
+            document.getElementById('formReproStatus').value = a.reproStatus || 'Laktasi (Aktif diperah)';
+            document.getElementById('formHealthStatus').value = a.healthStatus;
+            document.getElementById('formLastVaccineDate').value = a.lastVaccineDate || '';
+            document.getElementById('formVaccineName').value = a.vaccineName || '';
+            document.getElementById('formVet').value = a.vet || '';
+
+            document.getElementById('modalAnimalTitle').innerText = 'Edit Data Ternak Perah';
+            document.getElementById('animalModal').classList.remove('hidden');
+        }
+
+        async function deleteAnimal(id) {
+            if (confirm('Hapus data ternak ini?')) {
+                try {
+                    const response = await fetch(`/api/animals?id=${id}`, { method: 'DELETE' });
+                    const result = await response.json();
+                    if (result.success) {
+                        fetchAnimalsFromDB();
+                    } else {
+                        animals = animals.filter(a => a.id !== id);
+                        renderDisplay();
+                        renderStatsAndChart();
+                    }
+                } catch (err) {
+                    animals = animals.filter(a => a.id !== id);
+                    renderDisplay();
+                    renderStatsAndChart();
+                }
+            }
+        }
+
+        function openScanResultModal(tagCode) {
+            const a = animals.find(x => x.tag.toLowerCase() === tagCode.toLowerCase());
+            if (!a) {
+                alert('Ear Tag tidak ditemukan!');
+                return;
+            }
+
+            const totalCalves = Number(a.maleCalves || 0) + Number(a.femaleCalves || 0);
+
+            const content = `
+                <div class="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Barcode ID</span>
+                        <h4 class="text-xl font-mono font-bold text-brand-600 dark:text-brand-400">${a.tag}</h4>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${a.type === 'Sapi' ? 'bg-amber-500/10 text-amber-500' : 'bg-brand-500/10 text-brand-600 dark:text-brand-400'}">
+                        ${a.type} Perah
+                    </span>
+                </div>
+
+                <div class="bg-sky-500/10 p-4 rounded-2xl border border-sky-500/20 text-xs space-y-2">
+                    <h5 class="font-bold text-sky-700 dark:text-sky-400 uppercase tracking-wider"><i class="fa-solid fa-bottle-droplet mr-1"></i> Produksi Susu & Beranak</h5>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><span class="text-slate-400">Hasil Susu:</span><p class="font-black text-sky-600 text-sm">${a.milkVolume || 0} L/Hari</p></div>
+                        <div><span class="text-slate-400">Total Anak:</span><p class="font-bold">${totalCalves} Ekor</p></div>
+                        <div><span class="text-slate-400">Pedet Jantan (♂):</span><p class="font-bold">${a.maleCalves || 0} Ekor</p></div>
+                        <div><span class="text-slate-400">Pedet Betina (♀):</span><p class="font-bold">${a.femaleCalves || 0} Ekor</p></div>
+                    </div>
+                    <div class="border-t border-sky-500/20 pt-1.5"><span class="text-slate-400">Terakhir Beranak:</span> <span class="font-bold">${a.lastCalvingDate || 'Belum Ada Data'}</span></div>
+                </div>
+
+                <div class="bg-brand-500/10 p-4 rounded-2xl border border-brand-500/20 text-xs space-y-1.5">
+                    <h5 class="font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-syringe mr-1"></i> Rekam Medis & Suntikan</h5>
+                    <p><span class="text-slate-400">Kondisi Kesehatan:</span> <span class="font-bold text-brand-600 dark:text-brand-400">${a.healthStatus}</span></p>
+                    <p><span class="text-slate-400">Terakhir Suntik / Vaksin:</span> <span class="font-bold">${a.lastVaccineDate || 'Belum'}</span></p>
+                    <p><span class="text-slate-400">Jenis Vaksin / IB:</span> <span class="font-bold">${a.vaccineName || '-'}</span></p>
+                    <p><span class="text-slate-400">Dokter / Mantri:</span> <span class="font-bold">${a.vet || '-'}</span></p>
+                </div>
+            `;
+
+            document.getElementById('scanCardContent').innerHTML = content;
+            document.getElementById('btnPrintTagModal').setAttribute('onclick', `openPrintModal('${a.tag}')`);
+            document.getElementById('scanResultModal').classList.remove('hidden');
+        }
+
+        function closeScanResultModal() {
+            document.getElementById('scanResultModal').classList.add('hidden');
+        }
+
+        function openScannerModal() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 220 });
+                html5QrcodeScanner.render((decodedText) => {
+                    closeScannerModal();
+                    openScanResultModal(decodedText);
+                }, (error) => {});
+            }
+        }
+
+        function closeScannerModal() {
+            document.getElementById('scannerModal').classList.add('hidden');
+        }
+
+        function simulateScan(val) {
+            if (!val) return;
+            closeScannerModal();
+            openScanResultModal(val);
+        }
+
+        function openPrintModal(tagCode) {
+            const a = animals.find(x => x.tag === tagCode);
+            if (!a) return;
+
+            document.getElementById('printTagTitle').innerText = a.tag;
+            document.getElementById('printTagSub').innerText = `${a.type} ${a.breed} - Abimanyu Farm`;
+
+            JsBarcode("#barcodeCanvas", a.tag, {
+                format: "CODE128",
+                width: 1.5,
+                height: 45,
+                margin: 0,
+                displayValue: false
+            });
+
+            document.getElementById('printTagModal').classList.remove('hidden');
+        }
+
+        function closePrintModal() {
+            document.getElementById('printTagModal').classList.add('hidden');
+        }
+
+        function openManageUsersModal() {
+            renderUserList();
+            document.getElementById('manageUsersModal').classList.remove('hidden');
+        }
+
+        function closeManageUsersModal() {
+            document.getElementById('manageUsersModal').classList.add('hidden');
+        }
+
+        function renderUserList() {
+            const container = document.getElementById('usersListContainer');
+            container.innerHTML = '';
+            users.forEach(u => {
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs">
+                        <div>
+                            <span class="font-bold">${u.username}</span>
+                            <span class="text-[10px] bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded ml-2 font-bold">${u.role}</span>
+                        </div>
+                        ${u.username !== 'admin' ? `<button onclick="deleteUser('${u.username}')" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i></button>` : '<span class="text-slate-400">Utama</span>'}
+                    </div>
+                `;
+            });
+        }
+
+        function handleAddUser(e) {
+            e.preventDefault();
+            const u = document.getElementById('newUsername').value.trim();
+            const p = document.getElementById('newPassword').value.trim();
+            const r = document.getElementById('newRole').value;
+
+            if (users.some(x => x.username === u)) {
+                alert('Username sudah terdaftar!');
+                return;
+            }
+
+            users.push({ username: u, password: p, role: r });
+            saveData();
+            renderUserList();
+            e.target.reset();
+        }
+
+        function deleteUser(u) {
+            users = users.filter(x => x.username !== u);
+            saveData();
+            renderUserList();
+        }
+
+        function renderReminders() {
+            const container = document.getElementById('reminderList');
+            container.innerHTML = '';
+            reminders.forEach(r => {
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700/50">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" ${r.done ? 'checked' : ''} onchange="toggleReminder(${r.id})" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span class="${r.done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200 font-semibold'}">${r.title}</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400">${r.date}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleReminder(id) {
+            const r = reminders.find(x => x.id === id);
+            if (r) r.done = !r.done;
+            saveData();
+            renderReminders();
+        }
+
+        function addQuickReminder() {
+            const title = prompt('Masukkan pengingat / jadwal IB baru:');
+            if (title) {
+                reminders.push({ id: Date.now(), title: title, date: new Date().toISOString().split('T')[0], done: false });
+                saveData();
+                renderReminders();
+            }
+        }
+
+        function exportToCSV() {
+            let csv = 'Ear Tag Barcode,Jenis,Ras,Jenis Kelamin,Berat (Kg),Usia (Bln),Susu (L/Hari),Anak Jantan,Anak Betina,Terakhir Beranak,Status Kesehatan,Tanggal Suntik\n';
+            animals.forEach(a => {
+                csv += `"${a.tag}","${a.type}","${a.breed}","${a.gender}",${a.weight},${a.age},${a.milkVolume||0},${a.maleCalves||0},${a.femaleCalves||0},"${a.lastCalvingDate||''}","${a.healthStatus}","${a.lastVaccineDate||''}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', `AbimanyuFarm_LaporanSusu_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
