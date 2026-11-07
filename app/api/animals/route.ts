@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
 
     const cleanTag = body.tag.trim();
 
+    // Mengirim tanggal sebagai string atau null sesuai skema
     const animalData = {
       tag: cleanTag,
       type: body.type || 'Sapi',
@@ -39,28 +40,25 @@ export async function POST(request: Request) {
       milkVolume: parseFloat(body.milkVolume) || 0,
       maleCalves: parseInt(body.maleCalves) || 0,
       femaleCalves: parseInt(body.femaleCalves) || 0,
-      lastCalvingDate: body.lastCalvingDate ? new Date(body.lastCalvingDate) : null,
+      lastCalvingDate: body.lastCalvingDate ? String(body.lastCalvingDate) : null,
       reproStatus: body.reproStatus || 'Laktasi',
       healthStatus: body.healthStatus || 'Sehat',
-      lastVaccineDate: body.lastVaccineDate ? new Date(body.lastVaccineDate) : null,
+      lastVaccineDate: body.lastVaccineDate ? String(body.lastVaccineDate) : null,
       vaccineName: body.vaccineName || '',
       vet: body.vet || '',
     };
 
     let result;
-    // Cek apakah data dengan tag tersebut sudah ada
     const existing = await prisma.animal.findUnique({
       where: { tag: cleanTag }
     });
 
     if (existing) {
-      // Jika ada, lakukan update berdasarkan ID yang ada
       result = await prisma.animal.update({
         where: { id: existing.id },
         data: animalData,
       });
     } else {
-      // Jika belum ada, buat baru
       result = await prisma.animal.create({
         data: animalData,
       });
