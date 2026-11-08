@@ -526,39 +526,43 @@
             }
         });
 
-        async function fetchAnimalsFromDB() {
-            try {
-                const response = await fetch('/api/animals');
-                const result = await response.json();
-                if (result.success) {
-                    animals = result.data.map(item => ({
-                        id: item.id,
-                        tag: item.tag,
-                        type: item.type,
-                        breed: item.breed,
-                        gender: item.gender,
-                        weight: item.weight,
-                        age: item.age,
-                        buyPrice: item.buyPrice,
-                        feedCost: item.feedCost,
-                        milkVolume: item.milkVolume || 0,
-                        maleCalves: item.maleCalves || 0,
-                        femaleCalves: item.femaleCalves || 0,
-                        lastCalvingDate: item.lastCalvingDate || '',
-                        reproStatus: item.reproStatus || 'Laktasi (Aktif diperah)',
-                        healthStatus: item.healthStatus,
-                        lastVaccineDate: item.lastVaccineDate || '',
-                        vaccineName: item.vaccineName || '',
-                        vet: item.vet || ''
-                    }));
-                    
-                    renderDisplay();
-                    renderStatsAndChart();
-                }
-            } catch (error) {
-                console.error('Gagal memuat data dari database:', error);
-            }
+async function fetchAnimalsFromDB() {
+    try {
+        const response = await fetch('/api/animals');
+        const result = await response.json();
+        
+        // Karena API langsung mengembalikan array data (bukan { success: true, data: [...] })
+        const dataArray = Array.isArray(result) ? result : (result.data || []);
+
+        animals = dataArray.map(item => ({
+            id: item.id,
+            tag: item.tag,
+            type: item.type,
+            breed: item.breed,
+            gender: item.gender,
+            weight: item.weight,
+            age: item.age,
+            buyPrice: item.purchasePrice, // Sesuaikan dengan kolom database
+            feedCost: item.feedCost,
+            milkVolume: item.milkProduction || 0, // Sesuaikan dengan kolom database
+            maleCalves: item.maleCalves || 0,
+            femaleCalves: item.femaleCalves || 0,
+            lastCalvingDate: item.lastCalvingDate || '',
+            reproStatus: item.lactationStatus || 'Laktasi (Aktif diperah)', // Baca dari lactationStatus
+            healthStatus: item.healthStatus,
+            lastVaccineDate: item.lastVaccineDate || '',
+            vaccineName: item.vaccineType || '', // Baca dari vaccineType
+            vet: item.vetName || '' // Baca dari vetName
+        }));
+
+        // Panggil fungsi render tabel Anda di sini (misal: renderTable())
+        if (typeof renderTable === 'function') {
+            renderTable();
         }
+    } catch (error) {
+        console.error('Gagal mengambil data hewan:', error);
+    }
+}
 
         function initTheme() {
             if (isDarkMode) {
