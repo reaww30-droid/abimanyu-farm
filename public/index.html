@@ -526,43 +526,40 @@
             }
         });
 
-async function fetchAnimalsFromDB() {
-    try {
-        const response = await fetch('/api/animals');
-        const result = await response.json();
-        
-        // Karena API langsung mengembalikan array data (bukan { success: true, data: [...] })
-        const dataArray = Array.isArray(result) ? result : (result.data || []);
+        async function fetchAnimalsFromDB() {
+            try {
+                const response = await fetch('/api/animals');
+                const result = await response.json();
+                
+                const dataArray = Array.isArray(result) ? result : (result.data || []);
 
-        animals = dataArray.map(item => ({
-            id: item.id,
-            tag: item.tag,
-            type: item.type,
-            breed: item.breed,
-            gender: item.gender,
-            weight: item.weight,
-            age: item.age,
-            buyPrice: item.purchasePrice, // Sesuaikan dengan kolom database
-            feedCost: item.feedCost,
-            milkVolume: item.milkProduction || 0, // Sesuaikan dengan kolom database
-            maleCalves: item.maleCalves || 0,
-            femaleCalves: item.femaleCalves || 0,
-            lastCalvingDate: item.lastCalvingDate || '',
-            reproStatus: item.lactationStatus || 'Laktasi (Aktif diperah)', // Baca dari lactationStatus
-            healthStatus: item.healthStatus,
-            lastVaccineDate: item.lastVaccineDate || '',
-            vaccineName: item.vaccineType || '', // Baca dari vaccineType
-            vet: item.vetName || '' // Baca dari vetName
-        }));
+                animals = dataArray.map(item => ({
+                    id: item.id,
+                    tag: item.tag,
+                    type: item.type,
+                    breed: item.breed,
+                    gender: item.gender,
+                    weight: item.weight,
+                    age: item.age,
+                    buyPrice: item.purchasePrice,
+                    feedCost: item.feedCost,
+                    milkVolume: item.milkProduction || 0,
+                    maleCalves: item.maleCalves || 0,
+                    femaleCalves: item.femaleCalves || 0,
+                    lastCalvingDate: item.lastCalvingDate || '',
+                    reproStatus: item.lactationStatus || 'Laktasi (Aktif diperah)',
+                    healthStatus: item.healthStatus,
+                    lastVaccineDate: item.lastVaccineDate || '',
+                    vaccineName: item.vaccineType || '',
+                    vet: item.vetName || ''
+                }));
 
-        // Panggil fungsi render tabel Anda di sini (misal: renderTable())
-        if (typeof renderTable === 'function') {
-            renderTable();
+                renderDisplay();
+                renderStatsAndChart();
+            } catch (error) {
+                console.error('Gagal mengambil data hewan:', error);
+            }
         }
-    } catch (error) {
-        console.error('Gagal mengambil data hewan:', error);
-    }
-}
 
         function initTheme() {
             if (isDarkMode) {
@@ -810,6 +807,7 @@ async function fetchAnimalsFromDB() {
 
         function autoGenerateTagPrefix() {
             if (document.getElementById('editAnimalId').value) return;
+            
             const type = document.getElementById('formType').value;
             const count = animals.filter(a => a.type === type).length + 1;
             const code = type === 'Sapi' ? 'SAP' : 'KAM';
@@ -819,56 +817,6 @@ async function fetchAnimalsFromDB() {
         function generateRandomEarTag() {
             const rand = Math.floor(1000 + Math.random() * 9000);
             document.getElementById('formTag').value = `TAG-RAND-${rand}`;
-        }
-
-       async function saveAnimal(e) {
-            e.preventDefault();
-            
-            const editId = document.getElementById('editAnimalId').value;
-
-            const animalObj = {
-                id: editId || undefined,
-                tag: document.getElementById('formTag').value.trim(),
-                type: document.getElementById('formType').value,
-                breed: document.getElementById('formBreed').value || 'FH',
-                gender: document.getElementById('formGender').value,
-                weight: parseFloat(document.getElementById('formWeight').value) || 0,
-                age: parseInt(document.getElementById('formAge').value) || 0,
-                buyPrice: parseFloat(document.getElementById('formBuyPrice').value) || 0,
-                feedCost: parseFloat(document.getElementById('formFeedCost').value) || 0,
-                milkVolume: parseFloat(document.getElementById('formMilkVolume').value) || 0,
-                maleCalves: parseInt(document.getElementById('formMaleCalves').value) || 0,
-                femaleCalves: parseInt(document.getElementById('formFemaleCalves').value) || 0,
-                lastCalvingDate: document.getElementById('formLastCalvingDate').value || '',
-                reproStatus: document.getElementById('formReproStatus').value,
-                healthStatus: document.getElementById('formHealthStatus').value,
-                lastVaccineDate: document.getElementById('formLastVaccineDate').value,
-                vaccineName: document.getElementById('formVaccineName').value,
-                vet: document.getElementById('formVet').value || 'Dokter Mantri'
-            };
-
-            try {
-                const response = await fetch('/api/animals', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(animalObj)
-                });
-                const result = await response.json();
-                
-                // Karena API Anda mengembalikan data langsung atau objek, kita cek responsnya
-                if (response.ok) {
-                    closeAnimalModal();
-                    await fetchAnimalsFromDB(); // Ambil ulang data terbaru dari database
-                    renderDisplay();          // Perbarui tampilan tabel/grid
-                    renderStatsAndChart();    // Perbarui statistik & grafik
-                    alert('Data hewan berhasil disimpan!');
-                } else {
-                    alert(result.error || 'Gagal menyimpan data.');
-                }
-            } catch (error) {
-                console.error('Kesalahan jaringan:', error);
-                alert('Terjadi kesalahan saat menyimpan data ke server.');
-            }
         }
 
         function editAnimal(id) {
@@ -898,12 +846,66 @@ async function fetchAnimalsFromDB() {
             document.getElementById('animalModal').classList.remove('hidden');
         }
 
+        async function saveAnimal(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.dataset.isSubmitting === 'true') return; 
+            submitBtn.dataset.isSubmitting = 'true';
+            submitBtn.innerText = 'Menyimpan...';
+
+            const editId = document.getElementById('editAnimalId').value;
+
+            const animalObj = {
+                ...(editId ? { id: editId } : {}),
+                tag: document.getElementById('formTag').value.trim(),
+                type: document.getElementById('formType').value,
+                breed: document.getElementById('formBreed').value || 'FH',
+                gender: document.getElementById('formGender').value,
+                weight: parseFloat(document.getElementById('formWeight').value) || 0,
+                age: parseInt(document.getElementById('formAge').value) || 0,
+                buyPrice: parseFloat(document.getElementById('formBuyPrice').value) || 0,
+                feedCost: parseFloat(document.getElementById('formFeedCost').value) || 0,
+                milkVolume: parseFloat(document.getElementById('formMilkVolume').value) || 0,
+                maleCalves: parseInt(document.getElementById('formMaleCalves').value) || 0,
+                femaleCalves: parseInt(document.getElementById('formFemaleCalves').value) || 0,
+                lastCalvingDate: document.getElementById('formLastCalvingDate').value || '',
+                reproStatus: document.getElementById('formReproStatus').value,
+                healthStatus: document.getElementById('formHealthStatus').value,
+                lastVaccineDate: document.getElementById('formLastVaccineDate').value,
+                vaccineName: document.getElementById('formVaccineName').value,
+                vet: document.getElementById('formVet').value || 'Dokter Mantri'
+            };
+
+            try {
+                const response = await fetch('/api/animals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(animalObj)
+                });
+                
+                if (response.ok) {
+                    closeAnimalModal();
+                    await fetchAnimalsFromDB();
+                } else {
+                    const result = await response.json();
+                    alert(result.error || 'Gagal menyimpan data.');
+                }
+            } catch (error) {
+                console.error('Kesalahan jaringan:', error);
+                alert('Terjadi kesalahan saat menyimpan data ke server.');
+            } finally {
+                submitBtn.dataset.isSubmitting = 'false';
+                submitBtn.innerText = 'Simpan Data Hewan';
+            }
+        }
+
         async function deleteAnimal(id) {
             if (confirm('Hapus data ternak ini?')) {
                 try {
                     const response = await fetch(`/api/animals?id=${id}`, { method: 'DELETE' });
                     const result = await response.json();
-                    if (result.success) {
+                    if (result.success || response.ok) {
                         fetchAnimalsFromDB();
                     } else {
                         animals = animals.filter(a => a.id !== id);
