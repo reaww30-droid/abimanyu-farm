@@ -821,7 +821,7 @@ async function fetchAnimalsFromDB() {
             document.getElementById('formTag').value = `TAG-RAND-${rand}`;
         }
 
-        async function saveAnimal(e) {
+       async function saveAnimal(e) {
             e.preventDefault();
             
             const editId = document.getElementById('editAnimalId').value;
@@ -855,11 +855,15 @@ async function fetchAnimalsFromDB() {
                 });
                 const result = await response.json();
                 
-                if (result.success) {
+                // Karena API Anda mengembalikan data langsung atau objek, kita cek responsnya
+                if (response.ok) {
                     closeAnimalModal();
-                    fetchAnimalsFromDB();
+                    await fetchAnimalsFromDB(); // Ambil ulang data terbaru dari database
+                    renderDisplay();          // Perbarui tampilan tabel/grid
+                    renderStatsAndChart();    // Perbarui statistik & grafik
+                    alert('Data hewan berhasil disimpan!');
                 } else {
-                    alert(result.message || 'Gagal menyimpan data.');
+                    alert(result.error || 'Gagal menyimpan data.');
                 }
             } catch (error) {
                 console.error('Kesalahan jaringan:', error);
