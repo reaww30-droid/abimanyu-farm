@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Paksa gunakan URL dan Key langsung agar tidak pernah gagal saat build Vercel
 const supabaseUrl = 'https://tsojjspoqaaieelliygl.supabase.co';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_JtpWksibdhiEj2NQGpSF3g_xDmTSxhS';
 
@@ -36,29 +37,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tag hewan wajib diisi' }, { status: 400 });
     }
 
+    const tagValue = String(body.tag);
+
     const payload = {
-      tag: String(body.tag),
+      tag: tagValue,
       type: body.type ? String(body.type) : 'Sapi',
       breed: body.breed ? String(body.breed) : '',
       gender: body.gender ? String(body.gender) : '',
       weight: body.weight !== undefined && body.weight !== '' ? Number(body.weight) : null,
       age: body.age !== undefined && body.age !== '' ? Number(body.age) : null,
       
-      // Mapping dari nama properti frontend ke database
-      milkProduction: body.milkVolume !== undefined && body.milkVolume !== '' ? Number(body.milkVolume) : 0,
+      // Mapping dari nama properti frontend ke database Supabase
+      milkProduction: body.milkVolume !== undefined && body.milkVolume !== '' ? Number(body.milkVolume) : (body.milkProduction !== undefined ? Number(body.milkProduction) : 0),
       maleCalves: body.maleCalves !== undefined && body.maleCalves !== '' ? Number(body.maleCalves) : 0,
       femaleCalves: body.femaleCalves !== undefined && body.femaleCalves !== '' ? Number(body.femaleCalves) : 0,
       lastCalvingDate: parseDate(body.lastCalvingDate),
-      lactationStatus: body.reproStatus ? String(body.reproStatus) : '',
-      healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat',
+      lactationStatus: body.reproStatus ? String(body.reproStatus) : (body.lactationStatus ? String(body.lactationStatus) : ''),
+      healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat Walafiat',
       lastVaccineDate: parseDate(body.lastVaccineDate),
-      vaccineType: body.vaccineName ? String(body.vaccineName) : '',
-      vetName: body.vet ? String(body.vet) : '',
-      purchasePrice: body.buyPrice !== undefined && body.buyPrice !== '' ? Number(body.buyPrice) : null,
+      vaccineType: body.vaccineName ? String(body.vaccineName) : (body.vaccineType ? String(body.vaccineType) : ''),
+      vetName: body.vet ? String(body.vet) : (body.vetName ? String(body.vetName) : ''),
+      purchasePrice: body.buyPrice !== undefined && body.buyPrice !== '' ? Number(body.buyPrice) : (body.purchasePrice !== undefined ? Number(body.purchasePrice) : null),
       feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
       
-      // Menjamin kolom updatedAt terisi agar tidak melanggar not-null constraint
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(), // Menjamin kolom updatedAt terisi agar tidak melanggar not-null constraint
     };
 
     const { data, error } = await supabase
