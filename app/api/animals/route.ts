@@ -36,27 +36,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tag hewan wajib diisi' }, { status: 400 });
     }
 
-    const tagValue = String(body.tag);
-
     const payload = {
-      tag: tagValue,
+      tag: String(body.tag),
       type: body.type ? String(body.type) : 'Sapi',
       breed: body.breed ? String(body.breed) : '',
       gender: body.gender ? String(body.gender) : '',
       weight: body.weight !== undefined && body.weight !== '' ? Number(body.weight) : null,
       age: body.age !== undefined && body.age !== '' ? Number(body.age) : null,
-      milkProduction: body.milkProduction !== undefined && body.milkProduction !== '' ? Number(body.milkProduction) : null,
-      maleCalves: body.maleCalves !== undefined && body.maleCalves !== '' ? Number(body.maleCalves) : null,
-      femaleCalves: body.femaleCalves !== undefined && body.femaleCalves !== '' ? Number(body.femaleCalves) : null,
+      
+      // Mapping dari nama properti frontend ke database
+      milkProduction: body.milkVolume !== undefined && body.milkVolume !== '' ? Number(body.milkVolume) : 0,
+      maleCalves: body.maleCalves !== undefined && body.maleCalves !== '' ? Number(body.maleCalves) : 0,
+      femaleCalves: body.femaleCalves !== undefined && body.femaleCalves !== '' ? Number(body.femaleCalves) : 0,
       lastCalvingDate: parseDate(body.lastCalvingDate),
-      lactationStatus: body.lactationStatus ? String(body.lactationStatus) : '',
-      healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat Walafiat',
+      lactationStatus: body.reproStatus ? String(body.reproStatus) : '',
+      healthStatus: body.healthStatus ? String(body.healthStatus) : 'Sehat',
       lastVaccineDate: parseDate(body.lastVaccineDate),
-      vaccineType: body.vaccineType ? String(body.vaccineType) : '',
-      vetName: body.vetName ? String(body.vetName) : '',
-      purchasePrice: body.purchasePrice !== undefined && body.purchasePrice !== '' ? Number(body.purchasePrice) : null,
+      vaccineType: body.vaccineName ? String(body.vaccineName) : '',
+      vetName: body.vet ? String(body.vet) : '',
+      purchasePrice: body.buyPrice !== undefined && body.buyPrice !== '' ? Number(body.buyPrice) : null,
       feedCost: body.feedCost !== undefined && body.feedCost !== '' ? Number(body.feedCost) : null,
-      updatedAt: new Date().toISOString(), // Menjamin kolom updatedAt terisi agar tidak melanggar not-null constraint
+      
+      // Menjamin kolom updatedAt terisi agar tidak melanggar not-null constraint
+      updatedAt: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
